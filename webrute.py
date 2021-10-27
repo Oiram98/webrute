@@ -13,7 +13,7 @@ import usage
 
 threads = 5
 target_url = "http://testaspnet.vulnweb.com" 
-worldlist = "/tmp/all.txt" #SVNDigger wordlist
+worldlist = "/tmp/wordlist.txt" 
 resume_from_here = None   #we will use this to resume our brute forcing if connection is interrupted or target goes down
 user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 
