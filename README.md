@@ -8,5 +8,3 @@ NOTES.
   make sure to insert wordlist.txt in /tmp path if you want run webrute with default settings
 - webrute works for http (mostly) and https websites
 
-disclaimer clause :
-the author of webrute is not responsible for the use that will be made of it.
