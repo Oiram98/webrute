@@ -36,7 +36,7 @@ NOTES.
 
 VERSIONS.
 
-v1.0 
+v1.0  <br>
 v2.0 (current)  fix bugs, better user experience, added recursive directory brute forcing
 
 
