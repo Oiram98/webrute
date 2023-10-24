@@ -18,7 +18,8 @@ At the moment the tool allows you:
 
 
 The tool could be improved in the future. If you found this project interesting and would like to support me:
-paypal.me/coffee4Oiram 
+
+https://paypal.me/coffee4Oiram 
 
 ![alt text](https://github.com/Oiram98/webrute/blob/main/test_webrute.png?raw=true)
 
@@ -34,6 +35,7 @@ NOTES.
 </ul>
 
 VERSIONS.
+
 v1.0 
 v2.0 (current)  fix bugs, better user experience, added recursive directory brute forcing
 
