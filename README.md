@@ -38,8 +38,13 @@ NOTES.
 VERSIONS.
 
 v1.0  
+
 v2.0  fix bugs, better user experience, added recursive directory brute forcing
+
 v3.0 (current) fix minor bugs, added filtering and banner skipping
+
+
+
 
 
 
