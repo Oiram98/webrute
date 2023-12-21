@@ -18,13 +18,15 @@ user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78
 extensions = None # default extensions set
 recursive = False
 recursive_list = [] # for recursive searching
+filter_list = []
+showbanner = True 
 
 #read from command line
 try:
     opts, args = getopt.getopt(
         sys.argv[1:],
-        "ht:u:w:r:a:R",
-        ["help","threads","url","wordlist","resume","useragent","recursive"]
+        "hRbt:u:w:r:a:f:",
+        ["help","recursive","nobanner","threads=","url=","wordlist=","resume=","useragent=","filter="]
     )
 except getopt.GetoptError as err :
     print(str(err))
@@ -47,6 +49,11 @@ for o,a in opts:
         user_agent = a
     elif o in ("-R","--recursive"):
         recursive = True 
+    elif o in ("-f","--filter"):
+        filter_list = a.split(",")
+        filter_list = [int(x) for x in filter_list]  #conversion values
+    elif o in ("-b","--nobanner"):
+        showbanner = False
     else :
         assert False , "Unhandled Option"
 
@@ -63,6 +70,7 @@ def settings() :
     print("resume = "+str(resume_from_here))
     print("user agent = "+user_agent)
     print("recursive = "+ str(recursive))
+    print("filter = "+ str(filter_list))
     print("extensions = "+ str(extensions))
     print("")
 
@@ -100,9 +108,9 @@ def bruter(queue_words, extensions=None):
         attempt = queue_words.get()
         attempt_list = []
 
-        # we control if the file has an ext. if not , it's a directory path
+        # we control if the file has an ext. if not , it's a directory path. If the last char is '/', it's a directory path.
         
-        if "." not in attempt :
+        if ( "." not in attempt and attempt[-1] != '/' ):
             attempt_list.append("%s/" % attempt)
             if extensions :                         #if extensions are been declared, we add them to dir paths
                 for ext in extensions :
@@ -131,18 +139,30 @@ def bruter(queue_words, extensions=None):
 
                 response = urllib.request.urlopen(req)
 
-                if len(response.read()) :
+                if ( len(response.read()) and (len(filter_list) == 0))  :
                     print ("%s => %d status code" %(url,response.code))
                     if (( response.code == 200 ) and recursive ): 
                         #print (f"Added to the recursive list: {url}")
                         if "." not in ( url.split("/")[-1] ) :
                             recursive_list.append( url )
+
+                elif response.code in filter_list:
+                    print ("%s => %d status code" %(url,response.code))
+                    if (( response.code == 200 ) and recursive ): 
+                        #print (f"Added to the recursive list: {url}")
+                        if "." not in ( url.split("/")[-1] ) :
+                            recursive_list.append( url )
+
+                 
                       
       
             except urllib.error.HTTPError as e :
 
-                if (hasattr(e,'code') and e.code != 404)  : 
-                    print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code))
+                if (hasattr(e,'code') and e.code != 404) : 
+                    if ( len(filter_list) == 0 ) :
+                        print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code))  
+                    elif e.code in filter_list :
+                            print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code)) 
 
 
                 pass
@@ -156,7 +176,7 @@ def bruter_recursive(queue_words, new_target , extensions=None ):
             #we control if the file has an ext
             # if not , it's a directory path
             
-            if "." not in attempt :
+            if ( "." not in attempt and attempt[-1] != '/' ):
                 attempt_list.append("%s/" % attempt)
                 if extensions :                         #if extensions are been declared, we add them to dir paths
                     for ext in extensions :
@@ -182,18 +202,30 @@ def bruter_recursive(queue_words, new_target , extensions=None ):
 
                     response = urllib.request.urlopen(req)  
 
-                    if len(response.read()) :
+                    if ( len(response.read()) and (len(filter_list) == 0))  :
                         print ("%s => %d status code" %(url,response.code))
-                        if ( response.code == 200 ) : #TODO: non inserire in lista gli url che puntano a file!!
+                        if (( response.code == 200 ) and recursive ): 
+                            #print (f"Added to the recursive list: {url}")
                             if "." not in ( url.split("/")[-1] ) :
-                                #print (f"Added to the recursive list: {url}")
-                                recursive_list.append( url )
-                            
-                    
+                                recursive_list.append( url )    
+
+                    elif response.code in filter_list:
+                        print ("%s => %d status code" %(url,response.code))
+                        if (( response.code == 200 ) and recursive ): 
+                            #print (f"Added to the recursive list: {url}")
+                            if "." not in ( url.split("/")[-1] ) :
+                                recursive_list.append( url )    
+
+                     
+                          
+          
                 except urllib.error.HTTPError as e :    
 
-                    if (hasattr(e,'code') and e.code != 404)  : 
-                        print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code))    
+                    if (hasattr(e,'code') and e.code != 404) : 
+                        if ( len(filter_list) == 0 ) :
+                            print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code))  
+                        elif e.code in filter_list :
+                                print ("COULD BE INTERESTING : %s => %d status code " %(url,e.code))    
     
 
                     pass
@@ -225,23 +257,27 @@ def run_threads_recursive(threads, queue_words, new_target, extensions):
         th.join()
 
 
-print ( """
+def banner():
 
- ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
-▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
-▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌ ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ 
-▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          
-▐░▌   ▄   ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌     ▐░▌     ▐░█▄▄▄▄▄▄▄▄▄ 
-▐░▌  ▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌     ▐░▌     ▐░░░░░░░░░░░▌
-▐░▌ ▐░▌░▌ ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀█░█▀▀ ▐░▌       ▐░▌     ▐░▌     ▐░█▀▀▀▀▀▀▀▀▀ 
-▐░▌▐░▌ ▐░▌▐░▌▐░▌          ▐░▌       ▐░▌▐░▌     ▐░▌  ▐░▌       ▐░▌     ▐░▌     ▐░▌          
-▐░▌░▌   ▐░▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌ ▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░█▄▄▄▄▄▄▄▄▄ 
-▐░░▌     ▐░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░░░░░░░░░░░▌
- ▀▀       ▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀   ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀▀▀▀▀▀▀▀▀▀▀ 
-                                                                                           
-By Oiram98
- """)
+    print ( """ 
 
+     ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
+    ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+    ▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌ ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ 
+    ▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          
+    ▐░▌   ▄   ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌     ▐░▌     ▐░█▄▄▄▄▄▄▄▄▄ 
+    ▐░▌  ▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌     ▐░▌     ▐░░░░░░░░░░░▌
+    ▐░▌ ▐░▌░▌ ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀█░█▀▀ ▐░▌       ▐░▌     ▐░▌     ▐░█▀▀▀▀▀▀▀▀▀ 
+    ▐░▌▐░▌ ▐░▌▐░▌▐░▌          ▐░▌       ▐░▌▐░▌     ▐░▌  ▐░▌       ▐░▌     ▐░▌     ▐░▌          
+    ▐░▌░▌   ▐░▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌ ▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░█▄▄▄▄▄▄▄▄▄ 
+    ▐░░▌     ▐░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░░░░░░░░░░░▌
+     ▀▀       ▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀   ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀▀▀▀▀▀▀▀▀▀▀ 
+                                                                                               
+    By Oiram98
+     """)
+
+if showbanner :
+    banner()
 settings() 
 print("Starting directory brute forcing ...")
 print(" ")
