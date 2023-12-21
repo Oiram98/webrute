@@ -13,6 +13,7 @@ At the moment the tool allows you:
   <li> specifying the number of the threads for the directory brute forcing </li>
   <li> specifying the extensions that will be added to the wordlist entries that no have extensions  </li>
   <li> specifying the number of the threads for the directory brute forcing </li>
+  <li> Filtering out the results by response code number </li>
   <li> performing recursive directory brute forcing ( only for those path getting response status code 200 ) </li>
 </ul>
 
@@ -36,8 +37,9 @@ NOTES.
 
 VERSIONS.
 
-v1.0  <br>
-v2.0 (current)  fix bugs, better user experience, added recursive directory brute forcing
+v1.0  
+v2.0  fix bugs, better user experience, added recursive directory brute forcing
+v3.0 (current) fix minor bugs, added filtering and banner skipping
 
 
 
