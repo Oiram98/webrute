@@ -9,7 +9,7 @@ At the moment the tool allows you:
 
 <ul>
   <li> performing directory/files discover specifying any wordlist   </li>
-  <li> resuming the directory brute forcing at a specific point of the wordlist  </li>
+  <li> Starting the directory brute forcing at a specific point of the wordlist  </li>
   <li> specifying the number of the threads for the directory brute forcing </li>
   <li> specifying the extensions that will be added to the wordlist entries that no have extensions  </li>
   <li> specifying the number of the threads for the directory brute forcing </li>
